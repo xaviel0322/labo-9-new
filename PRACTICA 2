@@ -1,0 +1,48 @@
+PRACTICA 2: Despliegue de una VM con terraform en digital Ocean.
+
+1. Instalamos terraform en nuestra maquina server
+sudo yum install -y yum-utils
+sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+sudo yum -y install terraform
+terraform -v
+mkdir terraform
+cd terraform
+
+2. Creamos un archivo .tf donde pondremos nuestras configuraciones de nuestro servidor. 
+
+-> nano provider.tf
+
+terraform {
+  required_providers {
+    digitalocean = {
+      source = "digitalocean/digitalocean"
+      version = "~> 2.0"
+    }
+  }
+}
+
+variable "do_token" {}
+
+provider "digitalocean" {
+  token = var.do_token
+}
+
+resource "digitalocean_droplet" "www-1" {
+  image = "rockylinux-8-x64"
+  name = "OS3vm"
+  region = "nyc1"
+  size = "s-1vcpu-1gb"
+  ssh_keys = ["b1:ca:2c:15:7a:70:9e:05:a4:83:33:2a:90:11:b8:4c
+"]
+}
+
+-> Debemos obtener nuestra API en digitalocean
+-> Tambien el fingerprint
+
+terraform init
+terraform plan
+terraform apply
+yes
+
+dop_v1_d5b3460ee98e4a3c1eca960883c
+b1:ca:2c:15:7a:70:9e:05:a4:83:33:2a:90:11:b8:4c
