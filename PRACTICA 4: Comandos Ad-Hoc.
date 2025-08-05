@@ -1,0 +1,9 @@
+PRACTICA 4: Comandos Ad-Hoc. 
+Parte 1: Copiar los archivos en win_copy
+1. Entramos al usuario de Ansible en Windows. 
+2. Creamos un archivo en el Desktop
+
+-> ansible ansible2 -i /etc/ansible/hosts -m win_copy -a "src=C:/Users/ansible/Desktop/prueba.txt dest=C:/Users/ansible/Documents/prueba.txt remote_src=yes"
+
+Parte 2: Usar el modulo reboot para reiniciar la VM ansible1
+ansible ansible1 -m reboot -b
