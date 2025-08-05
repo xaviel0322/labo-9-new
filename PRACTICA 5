@@ -1,0 +1,69 @@
+PRACTICA 5: PLAYBOOKS
+
+Parte 1: Instalar Notepad++ en Windows. 
+1. Vamos a crear el playbook para instalar Notepad++ y le vamos a escribir las tareas que debe realizar:
+
+-> nano notepad.yml
+
+- name: Descargar e instalar Notepad++ en Windows 10
+  hosts: win
+  tasks:
+    - name: Descargando instalador de Notepad++
+      win_get_url:
+        url: https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.5.3/npp.8.5.3.Installer.exe
+        dest: C:\Users\ansible\Downloads\npp_installer.exe
+
+    - name: Ejecutando el instalador de Notepad++
+      win_package:
+        path: C:\Users\ansible\Downloads\npp_installer.exe
+        arguments: /S
+        state: present
+
+2. Ejecutamos el playbook: 
+ansible-playbook notepad.yml
+
+Parte 2: Actualizar los repositorios del sistema: 
+
+1. Vamos a crear el playbook para instalar Notepad++ y le vamos a escribir las tareas que debe realizar:
+
+-> nano reiniciar.yml
+
+- name: Actualizar los repositorios del sistema
+  hosts: ansible1
+  become: yes
+  tasks:
+    - name: Actualizar los repositorios con dnf
+      dnf:
+        name: '*'
+        state: latest
+
+2. Ejecutamos el playbook
+ansible-playbook reiniciar.yml
+
+
+
+nano instalar_nginx.yml
+---
+- name: Instalar y arrancar NGINX en Ubuntu
+  hosts: ansible1
+  become: yes
+  tasks:
+    - name: Actualizar caché de paquetes APT
+      apt:
+        update_cache: yes
+
+    - name: Instalar NGINX
+      apt:
+        name: nginx
+        state: present
+
+    - name: Iniciar y habilitar el servicio NGINX
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+ Guarda y cierra el archivo
+
+
+ansible-playbook instalar_nginx.yml
+
