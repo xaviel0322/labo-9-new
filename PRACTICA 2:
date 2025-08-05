@@ -1,0 +1,101 @@
+PRACTICA 2: INSTALACION DE ANSIBLE
+
+1. Instalar Python, y las dependencias y Ansible: 
+sudo dnf install -y python3.12 python3.12-devel git
+wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+yum install epel-release-latest-8.noarch.rpm
+sudo dnf install -y python3-libselinux
+python3.12 -m ensurepip --upgrade
+python3.12 -m pip install --upgrade pip 
+python3.12 -m pip install pywinrm requests-ntlm cryptography
+sudo dnf install -y sshpass
+sudo dnf install -y ansible
+
+2. Ahora vamos a configurar el inventario de Ansible: 
+sudo nano /etc/ansible/hosts
+
+-> Contenido del archivo: Vamos a escribir las ips de nuestros clientes. 
+
+[win]
+ansible2 ansible_host=192.168.0.109
+
+[win:vars]
+ansible_user=ansible
+ansible_password=ansible
+ansible_port=5985
+ansible_connection=winrm
+ansible_winrm_transport=basic
+ansible_winrm_server_cert_validation=ignore
+ansible_shell_type=powershell
+
+[linux]
+ansible1 ansible_host=167.71.161.96 ansible_user=ansible
+
+--> CLIENTE DIGITALOCEAN <--
+
+1. Creamos el usuario ansible: 
+useradd -m ansible
+
+2. Agregamos el usuario a sudoers para que no solicite contraseñas: 
+echo "ansible ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/ansible
+
+3. Ahora configuramos el SSH para el usuario: 
+sudo mkdir -p /home/ansible/.ssh
+sudo chmod 700 /home/ansible/.ssh
+sudo chown ansible:ansible /home/ansible/.ssh
+sudo nano /home/ansible/.ssh/authorized_keys
+
+--> En el archivo authorizarized agregamos la llave ssh del domain controler
+
+4. Le damos los permisos: 
+sudo chmod 600 /home/ansible/.ssh/authorized_keys
+sudo chown ansible:ansible /home/ansible/.ssh/authorized_keys
+
+
+
+--> CLIENTE WINDOWS <--
+
+1. Debemos apagar nuestro firewall. 
+2. Volver nuestra red privada. 
+
+En el powershell: 
+
+- > Desactivar el firewall temporalmente (opcional):
+Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
+
+-> Poner la red en privada (opcional):
+Set-NetConnectionProfile -NetworkCategory Private
+
+-> Configurar la política de ejecución para permitir scripts remotos:
+Set-ExecutionPolicy RemoteSigned -Force
+
+-> Habilitar PowerShell Remoting:
+Enable-PSRemoting -Force
+
+-> Configurar la autenticación básica y permitir conexiones no cifradas:
+Set-Item WSMan:\localhost\Service\Auth\Basic -Value $true
+Set-Item WSMan:\localhost\Service\AllowUnencrypted -Value $true
+Restart-Service WinRM
+
+-> Instalar el módulo PSWindowsUpdate (opcional):
+Install-Module -Name PSWindowsUpdate -Force
+
+-> Habilitar la regla del firewall para WinRM:
+New-NetFirewallRule -Name "WinRM HTTP" -Protocol TCP -LocalPort 5985 -Action Allow
+
+-> Crear el usuario Ansible:
+New-LocalUser -Name "ansible" -Password (ConvertTo-SecureString "ansible" -AsPlainText -Force) -FullName "Ansible" -Description "Usuario Ansible"
+
+-> Añadir el usuario al grupo Administradores:
+Add-LocalGroupMember -Group "Administradores" -Member "ansible"   ##### Si da error, usa "Administrator" si lo tienes en inglés #####
+
+-> Crear el listener para WinRM:
+winrm create winrm/config/Listener?Address=*+Transport=HTTP
+
+-> Verificar los listeners:
+winrm enumerate winrm/config/listener
+
+----> EN LA MAQUINA PRINCIPAL <---
+
+ansible -i /etc/ansible/hosts win -m win_ping
+ansible -i /etc/ansible/hosts linux -m ping
